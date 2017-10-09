@@ -6,3 +6,4 @@ authors = ["Eduard Bopp <eduard.bopp@aepsil0n.de>"]
 [dependencies]
 nalgebra = "0.13"
 approx = "0.1"
+alga = "0.5"
