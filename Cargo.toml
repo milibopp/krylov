@@ -1,0 +1,8 @@
+[package]
+name = "krylov"
+version = "0.1.0"
+authors = ["Eduard Bopp <eduard.bopp@aepsil0n.de>"]
+
+[dependencies]
+nalgebra = "0.13"
+approx = "0.1"
