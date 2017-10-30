@@ -6,8 +6,8 @@ extern crate ndarray;
 #[macro_use]
 extern crate approx;
 
-use nalgebra::{dot, norm, zero};
-use alga::linear::{FiniteDimVectorSpace, VectorSpace, NormedSpace};
+use nalgebra::{norm, zero};
+use alga::linear::{InnerSpace, VectorSpace};
 use alga::general::{Identity, Multiplicative};
 
 #[derive(Clone, Copy)]
@@ -22,7 +22,7 @@ struct State<V: VectorSpace> {
 }
 
 pub fn bicgstab<V, F>(guess: V, vector: V, matrix: F, tolerance: V::Field) -> V
-    where V: FiniteDimVectorSpace + NormedSpace + Clone,
+    where V: InnerSpace + Clone,
           V::Field: Identity<Multiplicative> + PartialOrd + Clone,
           F: Fn(&V) -> V,
 {
@@ -63,27 +63,27 @@ fn initial_state<V, F>(guess: V, vector: V, matrix: F) -> State<V>
 }
 
 fn first_step<V, F>(state: State<V>, matrix: F, reference_diff: &V) -> State<V>
-    where V: FiniteDimVectorSpace + Clone,
+    where V: InnerSpace + Clone,
           V::Field: Clone,
           F: Fn(&V) -> V
 {
-    let rho = dot(reference_diff, &state.difference);
+    let rho = reference_diff.inner_product(&state.difference);
     let beta = (rho.clone() / state.rho) * (state.alpha / state.omega.clone());
     let p = state.difference.clone() + (state.p - state.v * state.omega.clone()) * beta;
     let v = matrix(&p);
-    let alpha = rho.clone() / dot(reference_diff, &v);
+    let alpha = rho.clone() / reference_diff.inner_product(&v);
     let value = state.value + p.clone() * alpha.clone();
     State { value, rho, p, v, alpha, ..state }
 }
 
 fn second_step<V, F>(state: State<V>, matrix: F) -> State<V>
-    where V: FiniteDimVectorSpace + Clone,
+    where V: InnerSpace + Clone,
           V::Field: Clone,
           F: Fn(&V) -> V
 {
     let s = state.difference - state.v.clone() * state.alpha.clone();
     let t = matrix(&s);
-    let omega = dot(&t, &s) / dot(&t, &t);
+    let omega = t.inner_product(&s) / t.norm_squared();
     let value = state.value + s.clone() * state.omega.clone();
     let difference = s - t * state.omega;
     State { value, omega, difference, ..state }
