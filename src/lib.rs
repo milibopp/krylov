@@ -1,12 +1,14 @@
-extern crate nalgebra;
 extern crate alga;
+#[cfg(test)]
+extern crate nalgebra;
+#[cfg(test)]
 extern crate sprs;
+#[cfg(test)]
 extern crate ndarray;
 #[cfg(test)]
 #[macro_use]
 extern crate approx;
 
-use nalgebra::{norm, zero};
 use alga::linear::{InnerSpace, VectorSpace};
 use alga::general::{Identity, Multiplicative};
 
@@ -28,7 +30,7 @@ pub fn bicgstab<V, F>(guess: V, vector: V, matrix: F, tolerance: V::Field) -> V
 {
     let matrix = &matrix;
     let initial = initial_state(guess, vector.clone(), matrix);
-    let good_enough = |value: &_| norm(&(matrix(value) - vector.clone())) < tolerance;
+    let good_enough = |value: &_| (matrix(value) - vector.clone()).norm() < tolerance;
     let initial_difference = &initial.difference;
     let steps = (0..2).cycle()
         .map(|i| move |state|
@@ -54,11 +56,11 @@ fn initial_state<V, F>(guess: V, vector: V, matrix: F) -> State<V>
     State {
         difference: vector - matrix(&guess),
         value: guess,
-        rho: Identity::identity(),
-        omega: Identity::identity(),
-        alpha: Identity::identity(),
-        p: zero(),
-        v: zero()
+        rho: V::Field::identity(),
+        omega: V::Field::identity(),
+        alpha: V::Field::identity(),
+        p: V::zero(),
+        v: V::zero()
     }
 }
 
