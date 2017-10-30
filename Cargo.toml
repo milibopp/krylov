@@ -7,3 +7,5 @@ authors = ["Eduard Bopp <eduard.bopp@aepsil0n.de>"]
 nalgebra = "0.13"
 approx = "0.1"
 alga = "0.5"
+sprs = "0.6"
+ndarray = "0.10"

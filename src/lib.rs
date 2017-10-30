@@ -1,5 +1,7 @@
 extern crate nalgebra;
 extern crate alga;
+extern crate sprs;
+extern crate ndarray;
 #[cfg(test)]
 #[macro_use]
 extern crate approx;
@@ -38,6 +40,7 @@ pub fn bicgstab<V, F>(guess: V, vector: V, matrix: F, tolerance: V::Field) -> V
         );
 
     steps.scan(initial.clone(), |state, step| { *state = step(state.clone()); Some(state.clone()) })
+        .take(1_000)
         .find(|state| good_enough(&state.value))
         .map(|state| state.value)
         .unwrap()
@@ -90,6 +93,7 @@ fn second_step<V, F>(state: State<V>, matrix: F) -> State<V>
 #[cfg(test)]
 mod tests {
     use nalgebra::{Matrix3, Vector3, Matrix4, Vector4};
+    use sprs::CsMat;
     use super::*;
 
     #[test]
@@ -113,6 +117,29 @@ mod tests {
         let vector = matrix * solution;
         let guess = Vector4::new_random();
         let result = bicgstab(guess, vector, |v| matrix * v, 1e-8);
+        assert_relative_eq!(result, solution, max_relative = 1e-4);
+    }
+
+    #[test]
+    fn solves_system_represented_by_sparse_matrix() {
+        use nalgebra::VectorN;
+        use nalgebra::core::dimension::U10;
+        let matrix = CsMat::<f64>::new(
+            (10, 10),
+            vec![0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 19],
+            vec![0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9],
+            vec![1.; 19]
+        );
+        let multiply = |vector: &VectorN<f64, U10>| {
+            use ndarray::arr1;
+            let a = &matrix * &arr1(&vector.data);
+            let b = a.to_vec().into_iter();
+            VectorN::<f64, U10>::from_iterator(b)
+        };
+        let solution = VectorN::<f64, U10>::new_random();
+        let guess = VectorN::<f64, U10>::new_random();
+        let vector = multiply(&solution);
+        let result = bicgstab(guess, vector, multiply, 1e-8);
         assert_relative_eq!(result, solution, max_relative = 1e-4);
     }
 }
