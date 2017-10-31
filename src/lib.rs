@@ -126,12 +126,7 @@ mod tests {
     fn solves_system_represented_by_sparse_matrix() {
         use nalgebra::VectorN;
         use nalgebra::core::dimension::U10;
-        let matrix = CsMat::<f64>::new(
-            (10, 10),
-            vec![0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 19],
-            vec![0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9],
-            vec![1.; 19]
-        );
+        let matrix = nice_sparse_matrix_10();
         let multiply = |vector: &VectorN<f64, U10>| {
             use ndarray::arr1;
             let a = &matrix * &arr1(&vector.data);
@@ -143,5 +138,14 @@ mod tests {
         let vector = multiply(&solution);
         let result = bicgstab(guess, vector, multiply, 1e-8);
         assert_relative_eq!(result, solution, max_relative = 1e-4);
+    }
+
+    fn nice_sparse_matrix_10() -> CsMat<f64> {
+        CsMat::new(
+            (10, 10),
+            vec![0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 19],
+            vec![0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9],
+            vec![1.; 19]
+        )
     }
 }
